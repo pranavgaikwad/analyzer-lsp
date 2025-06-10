@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -358,6 +359,10 @@ func (r *ruleEngine) filterRules(ruleSets []RuleSet, selectors ...RuleSelector) 
 // runTaggingRules filters and runs info rules synchronously
 // returns list of non-info rules, a context to pass to them
 func (r *ruleEngine) runTaggingRules(ctx context.Context, infoRules []ruleMessage, mapRuleSets map[string]*konveyor.RuleSet, context ConditionContext, scope Scope) ConditionContext {
+	//  move all rules that have HasTags to the end of the list as they depend on other tagging rules
+	sort.Slice(infoRules, func(i int, j int) bool {
+		return !infoRules[i].rule.UsesHasTags && infoRules[j].rule.UsesHasTags
+	})
 	// track unique tags per ruleset
 	rulesetTagsCache := map[string]map[string]bool{}
 	for _, ruleMessage := range infoRules {
